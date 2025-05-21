@@ -1,12 +1,10 @@
-import os
-import openai
-from dotenv import load_dotenv
+from openai import OpenAI
+from config.settings import settings  # if using centralized config
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 def summarize_text(text: str) -> str:
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are an assistant that summarizes video transcripts."},
@@ -14,3 +12,4 @@ def summarize_text(text: str) -> str:
         ]
     )
     return response.choices[0].message.content.strip()
+
