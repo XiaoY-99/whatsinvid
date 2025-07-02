@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from src.backend.whisper_utils import transcribe_audio
 from src.backend.gpt_utils import summarize_text
 from src.backend.slide_maker import generate_slides
@@ -8,6 +9,16 @@ import os
 
 app = FastAPI()
 
+# Allow CORS (for frontend to access backend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("ALLOWED_ORIGINS", "*")],  # Replace "*" with frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Setup upload folder
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -56,4 +67,3 @@ async def create_poster(file: UploadFile = File(...)):
     poster_path = os.path.join(UPLOAD_DIR, "poster.png")
     generate_poster(summary, poster_path)
     return {"message": "Poster generated", "path": poster_path}
-
