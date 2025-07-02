@@ -2,11 +2,11 @@ import os
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.backend.whisper_utils import transcribe_audio
-from src.backend.gpt_utils import summarize_text
-from src.backend.slide_maker import generate_slides
-from src.backend.subtitle_utils import generate_srt
-from src.backend.poster_gen import generate_poster
+from whisper_utils import transcribe_audio
+from gpt_utils import summarize_text
+from slide_maker import generate_slides
+from subtitle_utils import generate_srt
+from poster_gen import generate_poster
 
 # Initialize FastAPI app
 app = FastAPI()
