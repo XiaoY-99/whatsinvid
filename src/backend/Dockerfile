@@ -1,22 +1,19 @@
 # Base image
 FROM python:3.11-slim
 
-# Environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH /app
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
-# Working directory in container
+# Create and set working directory
 WORKDIR /app
 
-# Install dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y ffmpeg gcc && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY ../../ .  
-
-# Set working directory to backend
-WORKDIR /app/src/backend
+# Copy backend app code into container
+COPY . /app
 
 # Install Python packages
 RUN pip install --upgrade pip
