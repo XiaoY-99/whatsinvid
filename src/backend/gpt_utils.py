@@ -7,8 +7,14 @@ def summarize_text(text: str) -> str:
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "You are an assistant that summarizes video transcripts."},
-            {"role": "user", "content": f"Summarize this transcript:\n{text}"}
+            {
+                "role": "system",
+                "content": (
+                    "You are an assistant that produces short, concise abstracts of video/audio transcripts. "
+                    "Summarize the key topic, purpose, and main points of the content in 1-2 paragraphs."
+                ),
+            },
+            {"role": "user", "content": f"Transcript:\n{text}\n\nGenerate an abstract:"}
         ]
     )
     return response.choices[0].message.content.strip()
