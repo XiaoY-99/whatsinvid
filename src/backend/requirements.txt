@@ -7,3 +7,4 @@ moviepy==1.0.3
 pillow==10.3.0
 python-dotenv==1.0.1
 yt-dlp==2024.5.27
+python-multipart==0.0.6
