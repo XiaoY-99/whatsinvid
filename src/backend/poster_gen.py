@@ -3,6 +3,16 @@ import textwrap
 import os
 
 def generate_poster(summary: str, output_path: str) -> str:
+    """
+    Create a PNG poster containing a translated summary.
+
+    Args:
+        summary (str): Translated summary text.
+        output_path (str): Path to save the poster image.
+
+    Returns:
+        str: Path to the poster image.
+    """
     width, height = 800, 1000
     background_color = (245, 245, 245)
     text_color = (30, 30, 30)
@@ -21,23 +31,22 @@ def generate_poster(summary: str, output_path: str) -> str:
         title_font = ImageFont.load_default()
         body_font = ImageFont.load_default()
 
-    # Optional: paste logo (make sure logo.png is in the working directory)
+    # Optional logo
     logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
     if os.path.exists(logo_path):
         logo = Image.open(logo_path).convert("RGBA")
         logo.thumbnail((120, 120))
-        img.paste(logo, (width - logo.width - margin, margin), logo)  # paste with transparency
+        img.paste(logo, (width - logo.width - margin, margin), logo)
 
     # Draw title
     title_text = "Video Summary"
     title_w, title_h = draw.textsize(title_text, font=title_font)
     draw.text((margin, margin), title_text, fill=title_color, font=title_font)
 
-    # Wrap and draw summary text
+    # Draw wrapped translated summary
     wrapped_summary = textwrap.fill(summary, width=70)
     summary_y = margin + title_h + spacing
     draw.text((margin, summary_y), wrapped_summary, fill=text_color, font=body_font)
 
-    # Save the poster
     img.save(output_path)
     return output_path

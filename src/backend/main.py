@@ -1,11 +1,13 @@
 import os
-from fastapi import FastAPI, UploadFile, File
+import uuid
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 from whisper_utils import transcribe_audio
 from gpt_utils import summarize_text
+from translation_utils import translate_text
 from slide_maker import generate_slides
-from subtitle_utils import generate_srt
+from subtitle_utils import generate_srt_and_txt
 from poster_gen import generate_poster
 
 # Initialize FastAPI app
@@ -24,51 +26,102 @@ app.add_middleware(
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@app.post("/upload/")
-async def upload_audio(file: UploadFile = File(...)):
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
-    with open(filepath, "wb") as buffer:
-        buffer.write(await file.read())
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
-    transcript = transcribe_audio(filepath)
-    summary = summarize_text(transcript)
+@app.post("/summary/")
+async def create_summary(
+    file: UploadFile = File(...),
+    language: str = Form("English"),
+    tone: str = Form("neutral")
+):
+    uid = str(uuid.uuid4())
+    filename_base = os.path.splitext(file.filename)[0]
+    filepath = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}.mp3")
 
-    return {"transcript": transcript, "summary": summary}
-
-@app.post("/slides/")
-async def create_slides(file: UploadFile = File(...)):
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
     with open(filepath, "wb") as f:
         f.write(await file.read())
 
     transcript = transcribe_audio(filepath)
-    summary = summarize_text(transcript)
-    slide_path = os.path.join(UPLOAD_DIR, "slides.pptx")
-    generate_slides(summary, slide_path)
+    summary = summarize_text(transcript, language=language, tone=tone)
 
-    return {"message": "Slides generated", "path": slide_path}
+    summary_path = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}_summary.txt")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write(summary)
+
+    return {
+        "message": f"Summary generated in {language} with {tone} tone",
+        "summary_path": summary_path
+    }
 
 @app.post("/subtitles/")
-async def create_subtitles(file: UploadFile = File(...)):
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
+async def create_subtitles(
+    file: UploadFile = File(...),
+    language: str = Form("English")
+):
+    uid = str(uuid.uuid4())
+    filename_base = os.path.splitext(file.filename)[0]
+    filepath = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}.mp3")
+
     with open(filepath, "wb") as f:
         f.write(await file.read())
 
     transcript = transcribe_audio(filepath)
-    srt_path = os.path.join(UPLOAD_DIR, "subtitles.srt")
-    generate_srt(transcript, srt_path)
+    if language.lower() != "english":
+        transcript = translate_text(transcript, language)
 
-    return {"message": "Subtitles generated", "path": srt_path}
+    base_output_path = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}")
+    paths = generate_srt_and_txt(transcript, base_output_path)
+
+    return {
+        "message": f"Subtitles generated in {language}",
+        "srt_path": paths["srt"],
+        "txt_path": paths["txt"]
+    }
+
+@app.post("/slides/")
+async def create_slides(
+    file: UploadFile = File(...),
+    language: str = Form("English"),
+    tone: str = Form("neutral")
+):
+    uid = str(uuid.uuid4())
+    filename_base = os.path.splitext(file.filename)[0]
+    filepath = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}.mp3")
+
+    with open(filepath, "wb") as f:
+        f.write(await file.read())
+
+    transcript = transcribe_audio(filepath)
+    summary = summarize_text(transcript, language=language, tone=tone)
+    slide_path = os.path.join(UPLOAD_DIR, f"{uid}_slides.pptx")
+    generate_slides(summary, slide_path)
+
+    return {
+        "message": f"Slides generated in {language} with {tone} tone",
+        "path": slide_path
+    }
 
 @app.post("/poster/")
-async def create_poster(file: UploadFile = File(...)):
-    filepath = os.path.join(UPLOAD_DIR, file.filename)
+async def create_poster(
+    file: UploadFile = File(...),
+    language: str = Form("English"),
+    tone: str = Form("neutral")
+):
+    uid = str(uuid.uuid4())
+    filename_base = os.path.splitext(file.filename)[0]
+    filepath = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}.mp3")
+
     with open(filepath, "wb") as f:
         f.write(await file.read())
 
     transcript = transcribe_audio(filepath)
-    summary = summarize_text(transcript)
-    poster_path = os.path.join(UPLOAD_DIR, "poster.png")
+    summary = summarize_text(transcript, language=language, tone=tone)
+    poster_path = os.path.join(UPLOAD_DIR, f"{uid}_poster.png")
     generate_poster(summary, poster_path)
 
-    return {"message": "Poster generated", "path": poster_path}
+    return {
+        "message": f"Poster generated in {language} with {tone} tone",
+        "path": poster_path
+    }

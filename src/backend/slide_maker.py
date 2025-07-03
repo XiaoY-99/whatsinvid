@@ -3,6 +3,16 @@ from pptx.util import Inches
 import os
 
 def generate_slides(summary: str, output_path: str) -> str:
+    """
+    Generate a simple PowerPoint file from a translated summary.
+
+    Args:
+        summary (str): Translated summary (multiline).
+        output_path (str): Path to save the PPTX file.
+
+    Returns:
+        str: Path to the generated slide file.
+    """
     prs = Presentation()
     slide_layout = prs.slide_layouts[1]
 
