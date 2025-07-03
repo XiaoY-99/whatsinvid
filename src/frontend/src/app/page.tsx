@@ -1,9 +1,10 @@
 'use client';
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Page() {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<{ transcript?: string; summary?: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,32 +51,55 @@ export default function Page() {
     <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-sans">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start w-full max-w-2xl">
         <Image
-          className="dark:invert"
-          src="/next.svg"
+          src="/next.svg?v=2"
           alt="Next.js logo"
           width={180}
           height={38}
-          priority
         />
 
         <div className="w-full">
           <h1 className="text-2xl font-bold mb-4">Upload Audio/Video</h1>
-          <input
-            type="file"
-            accept="audio/*,video/*"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="mb-4 block w-full"
-          />
-          <button
-            onClick={handleUpload}
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Processing..." : "Upload"}
-          </button>
 
-          {error && <p className="text-red-600 mt-4">{error}</p>}
+          {/* File picker */}
+          <div className="flex gap-4 mb-4">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Choose File
+            </button>
 
+            <input
+              ref={inputRef}
+              type="file"
+              accept="audio/*,video/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const selected = e.target.files?.[0] || null;
+                setFile(selected);
+                console.log("Chosen file:", selected);
+              }}
+            />
+
+            <button
+              onClick={handleUpload}
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? "Processing..." : "Upload"}
+            </button>
+          </div>
+
+          {/* File name display */}
+          <p className="text-sm mb-2">
+            Selected file: <span className="font-semibold">{file?.name || "None"}</span>
+          </p>
+
+          {/* Error message */}
+          {error && <p className="text-red-600 mt-2">{error}</p>}
+
+          {/* Result */}
           {result?.summary && (
             <div className="mt-6 bg-gray-100 p-4 rounded">
               <h2 className="font-semibold text-lg mb-2">Summary:</h2>
