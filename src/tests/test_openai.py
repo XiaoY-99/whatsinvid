@@ -1,4 +1,4 @@
-from config.settings import settings
+from src.backend.config.settings import settings
 from openai import OpenAI
 
 def test_openai_response():

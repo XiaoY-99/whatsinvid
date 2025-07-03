@@ -28,6 +28,7 @@ class Settings:
         self.BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
         # CORS
-        self.ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", self.FRONTEND_URL).split(",")
+        allowed = os.getenv("ALLOWED_ORIGINS", self.FRONTEND_URL)
+        self.ALLOWED_ORIGINS = [origin.strip() for origin in allowed.split(",")]
 
 settings = Settings()
