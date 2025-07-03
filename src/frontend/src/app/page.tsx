@@ -23,7 +23,7 @@ export default function Page() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload/`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/upload/`, {
         method: "POST",
         body: formData,
       });
