@@ -2,31 +2,19 @@ from openai import OpenAI
 from config.settings import settings
 from openai.types.chat import ChatCompletion
 
-# Initialize OpenAI client
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Correct way to initialize OpenAI client with new SDK (v1.x+)
+client = OpenAI()  # Don't pass api_key here
 
 def summarize_text(text: str, language: str = "English", tone: str = "neutral") -> str:
-    """
-    Summarizes the transcript in a specified tone and language.
-
-    Args:
-        text (str): Transcript text
-        language (str): Target language for the summary (default: English)
-        tone (str): Desired tone/style e.g., "scientific", "business", "marketing" (default: neutral)
-
-    Returns:
-        str: The generated summary
-    """
     if not text or not text.strip():
         return "Transcript is empty. No summary generated."
 
-    # Customize system message based on tone
     tone_instruction = {
         "scientific": "Use an academic and analytical tone suitable for researchers or experts.",
         "business": "Use a clear, concise, and executive-friendly tone appropriate for business reports.",
         "marketing": "Use a persuasive, engaging, and energetic tone like a marketing copywriter.",
         "neutral": "Use a neutral and informative tone appropriate for general audiences."
-    }.get(tone.lower(), tone_instruction := "Use a neutral tone appropriate for general audiences.")
+    }.get(tone.lower(), "Use a neutral tone appropriate for general audiences.")
 
     try:
         response: ChatCompletion = client.chat.completions.create(
