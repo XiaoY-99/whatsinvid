@@ -26,6 +26,7 @@ function UploadForm() {
 
   return (
     <form onSubmit={handleSubmit}>
+      <img src="/next.svg" alt="Next.js Logo" width={120} height={40} />  
       <input type="file" accept="audio/*,video/*" onChange={(e) => setFile(e.target.files[0])} />
 
       <label>Language:</label>

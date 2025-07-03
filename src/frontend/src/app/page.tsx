@@ -3,15 +3,21 @@
 import Image from "next/image";
 import { useState } from "react";
 
-export default function Home() {
+export default function Page() {
   const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<{ transcript: string; summary: string } | null>(null);
+  const [result, setResult] = useState<{ transcript?: string; summary?: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file) {
+      setError("Please select a file first.");
+      return;
+    }
 
     setLoading(true);
+    setError(null);
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -20,10 +26,21 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
+
+      if (!res.ok) {
+        throw new Error(`Server responded with ${res.status}`);
+      }
+
       const data = await res.json();
       setResult(data);
-    } catch (error) {
-      console.error("Upload failed:", error);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Upload failed:", err.message);
+        setError(err.message);
+      } else {
+        console.error("Upload failed:", err);
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -57,7 +74,9 @@ export default function Home() {
             {loading ? "Processing..." : "Upload"}
           </button>
 
-          {result && (
+          {error && <p className="text-red-600 mt-4">{error}</p>}
+
+          {result?.summary && (
             <div className="mt-6 bg-gray-100 p-4 rounded">
               <h2 className="font-semibold text-lg mb-2">Summary:</h2>
               <p className="text-sm whitespace-pre-wrap">{result.summary}</p>
