@@ -15,10 +15,10 @@ function UploadForm() {
     formData.append("language", language);
     formData.append("tone", tone);
 
-    const res = await fetch("https://whatsinvid.onrender.com/summary/", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/summary/`, {
       method: "POST",
       body: formData,
-    });
+    });    
 
     const data = await res.json();
     setResponse(data);
