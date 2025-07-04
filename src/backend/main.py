@@ -3,6 +3,7 @@ import uuid
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from whisper_utils import transcribe_audio
 from gpt_utils import summarize_text
@@ -137,6 +138,18 @@ async def create_poster(
         "message": f"Poster generated in {language} with {tone} tone",
         "path": f"uploads/{poster_filename}"
     }
+
+
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        return {"error": "File not found"}
+    return FileResponse(
+        file_path,
+        filename=filename,
+        media_type='application/octet-stream'
+    )
 
 
 # Make the uploads folder publicly accessible via /uploads/*

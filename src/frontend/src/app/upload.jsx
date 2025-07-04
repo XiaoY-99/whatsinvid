@@ -50,13 +50,14 @@ function UploadForm() {
   
     if (!filePath) return alert("No downloadable file path found.");
   
+    const fileName = filePath.split("/").pop();
     const link = document.createElement("a");
-    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/${filePath}`;
-    link.setAttribute("download", ""); // Force browser to download
+    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}`;
+    link.setAttribute("download", ""); // Force download
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };  
+  };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}>
