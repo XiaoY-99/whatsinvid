@@ -75,19 +75,16 @@ def generate_poster(summary: str, output_path: str) -> str:
         line_h = line_bbox[3] - line_bbox[1]
         y += line_h + 10
 
-    # Get GPT-based visual concept suggestions
+    # 🔗 Get GPT-based visual concept suggestions
     concepts = get_visual_concepts(summary)
     print(f"[INFO] Suggested visual tags: {concepts}")
 
-    # Try to add an icon for each concept (up to 2)
+    # 🖼 Try to add up to 4 matching icons
     image_dir = os.path.join(os.path.dirname(__file__), "images")
-    icon_x = width - 140  # align right
-    icon_y = margin
-
-    used_icons = 0
-    max_icons = 4
     icon_x = width - 140
     icon_y = margin
+    used_icons = 0
+    max_icons = 4
 
     for concept in concepts:
         icon_file = f"{concept.lower().replace(' ', '_')}.png"
@@ -108,7 +105,7 @@ def generate_poster(summary: str, output_path: str) -> str:
         else:
             print(f"[INFO] No icon found for: {concept}")
 
-    # Fallback: Add default and general if no icons were added
+    # Fallback icons if none matched
     if used_icons == 0:
         for fallback in ["default.png", "general.png"]:
             fallback_path = os.path.join(image_dir, fallback)
