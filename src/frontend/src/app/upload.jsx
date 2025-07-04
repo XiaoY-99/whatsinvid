@@ -52,7 +52,7 @@ function UploadForm() {
   
     const fileName = filePath.split("/").pop(); // Get just the filename
     const link = document.createElement("a");
-    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}?download=true`;
+    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}`;
     link.setAttribute("download", fileName);
     document.body.appendChild(link);
     link.click();

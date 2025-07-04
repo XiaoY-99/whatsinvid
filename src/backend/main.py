@@ -135,7 +135,7 @@ async def create_poster(
     }
 
 @app.get("/download/{filename}")
-async def download_file(filename: str, download: bool = True):
+async def download_file(filename: str):
     file_path = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(file_path):
         return {"error": "File not found"}
