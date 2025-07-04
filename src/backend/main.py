@@ -1,6 +1,8 @@
 import os
 import uuid
-from fastapi import FastAPI, UploadFile, File, Form
+import redis
+import json
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -15,7 +17,7 @@ from poster_gen import generate_poster
 # Initialize FastAPI app
 app = FastAPI()
 
-# Allow frontend origin (adjust domain if needed)
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://whatsinvid.vercel.app"],
@@ -24,43 +26,71 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create uploads directory if not exists
+# Upload directory
 BASE_DIR = os.path.dirname(__file__)
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Health check
+# Redis setup
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"),
+    port=int(os.getenv("REDIS_PORT", 6379)),
+    db=0,
+    decode_responses=True
+)
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
 
-
 @app.post("/summary/")
 async def create_summary(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     language: str = Form("English"),
     tone: str = Form("neutral")
 ):
-    uid = str(uuid.uuid4())
+    task_id = str(uuid.uuid4())
     filename_base = os.path.splitext(file.filename)[0]
-    input_path = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}.mp3")
+    input_path = os.path.join(UPLOAD_DIR, f"{task_id}_{filename_base}.mp3")
 
     with open(input_path, "wb") as f:
         f.write(await file.read())
 
-    transcript = transcribe_audio(input_path)
-    summary = summarize_text(transcript, language=language, tone=tone)
+    # Save initial task status
+    redis_client.setex(task_id, 7200, json.dumps({"status": "processing"}))
 
-    summary_filename = f"{uid}_{filename_base}_summary.txt"
-    summary_path = os.path.join(UPLOAD_DIR, summary_filename)
-    with open(summary_path, "w", encoding="utf-8") as f:
-        f.write(summary)
+    background_tasks.add_task(process_summary, task_id, input_path, filename_base, language, tone)
+    return {"task_id": task_id, "status": "processing"}
 
-    return {
-        "message": f"Summary generated in {language} with {tone} tone",
-        "summary_path": f"uploads/{summary_filename}"
-    }
+async def process_summary(task_id, input_path, filename_base, language, tone):
+    try:
+        transcript = transcribe_audio(input_path)
+        summary = summarize_text(transcript, language=language, tone=tone)
 
+        summary_filename = f"{task_id}_{filename_base}_summary.txt"
+        summary_path = os.path.join(UPLOAD_DIR, summary_filename)
+
+        with open(summary_path, "w", encoding="utf-8") as f:
+            f.write(summary)
+
+        redis_client.setex(task_id, 7200, json.dumps({
+            "status": "done",
+            "path": f"uploads/{summary_filename}",
+            "message": f"Summary generated in {language} with {tone} tone"
+        }))
+    except Exception as e:
+        redis_client.setex(task_id, 7200, json.dumps({
+            "status": "error",
+            "message": str(e)
+        }))
+
+@app.get("/status/{task_id}")
+async def get_task_status(task_id: str):
+    task_data = redis_client.get(task_id)
+    if not task_data:
+        return {"status": "not_found"}
+    return json.loads(task_data)
 
 @app.post("/subtitles/")
 async def create_subtitles(
@@ -87,7 +117,6 @@ async def create_subtitles(
         "txt_path": f"uploads/{os.path.basename(paths['txt'])}"
     }
 
-
 @app.post("/slides/")
 async def create_slides(
     file: UploadFile = File(...),
@@ -112,7 +141,6 @@ async def create_slides(
         "message": f"Slides generated in {language} with {tone} tone",
         "path": f"uploads/{slide_filename}"
     }
-
 
 @app.post("/poster/")
 async def create_poster(
@@ -139,7 +167,6 @@ async def create_poster(
         "path": f"uploads/{poster_filename}"
     }
 
-
 @app.get("/download/{filename}")
 async def download_file(filename: str, download: bool = True):
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -153,6 +180,5 @@ async def download_file(filename: str, download: bool = True):
         headers={"Content-Disposition": f"attachment; filename={filename}"} if download else {}
     )
 
-
-# Make the uploads folder publicly accessible via /uploads/*
+# Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
