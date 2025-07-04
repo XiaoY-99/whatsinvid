@@ -4,7 +4,7 @@ import os
 
 def generate_slides(summary: str, output_path: str) -> str:
     """
-    Generate a simple PowerPoint file from a translated summary, each with a logo.
+    Generate a PowerPoint file from a translated summary using a template with a pre-inserted logo.
 
     Args:
         summary (str): Translated summary (multiline).
@@ -13,30 +13,24 @@ def generate_slides(summary: str, output_path: str) -> str:
     Returns:
         str: Path to the generated slide file.
     """
-    prs = Presentation()
-    slide_layout = prs.slide_layouts[1]
+    base_dir = os.path.dirname(__file__)
+    template_path = os.path.join(base_dir, "template_with_logo.pptx")
 
-    # Path to logo image (ensure it's in the same dir as this script)
-    logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
-    add_logo = os.path.exists(logo_path)
+    # Load the template
+    prs = Presentation(template_path)
+    slide_layout = prs.slide_layouts[1]  # Usually "Title and Content"
 
     for idx, bullet in enumerate(summary.split('\n')):
-        if bullet.strip():
-            slide = prs.slides.add_slide(slide_layout)
-            title = slide.shapes.title
-            content = slide.placeholders[1]
+        bullet = bullet.strip()
+        if not bullet:
+            continue
 
-            title.text = f"Point {idx + 1}"
-            content.text = bullet.strip()
+        slide = prs.slides.add_slide(slide_layout)
+        title = slide.shapes.title
+        content = slide.placeholders[1]
 
-            # Add logo to slide (e.g., bottom-right corner)
-            if add_logo:
-                slide.shapes.add_picture(
-                    logo_path,
-                    left=prs.slide_width - Inches(1.8),     # near the right edge
-                    top=prs.slide_height - Inches(1.2),     # near the bottom
-                    width=Inches(1.5)                       # adjust size as needed
-                )
+        title.text = f"Point {idx + 1}"
+        content.text = bullet
 
     prs.save(output_path)
     return output_path
