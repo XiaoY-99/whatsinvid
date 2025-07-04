@@ -16,8 +16,9 @@ function UploadForm() {
 
     if (!file) return alert("Please select a file");
 
-    setLoading(true); // Moved up
-
+    setLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 50)); // Let React update UI
+    
     try {
       const formData = new FormData();
       formData.append("file", file);
