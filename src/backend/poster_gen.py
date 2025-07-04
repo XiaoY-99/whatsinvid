@@ -40,9 +40,12 @@ def generate_poster(summary: str, output_path: str) -> str:
 
     # Draw title
     title_text = "Video Summary"
-    title_w, title_h = draw.textsize(title_text, font=title_font)
-    draw.text((margin, margin), title_text, fill=title_color, font=title_font)
-
+    title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
+    title_w = title_bbox[2] - title_bbox[0]
+    title_h = title_bbox[3] - title_bbox[1]
+    title_x = (width - title_w) // 2
+    draw.text((title_x, margin), title_text, fill=title_color, font=title_font)
+    
     # Draw wrapped translated summary
     wrapped_summary = textwrap.fill(summary, width=70)
     summary_y = margin + title_h + spacing
