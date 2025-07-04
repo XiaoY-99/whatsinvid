@@ -44,23 +44,26 @@ function UploadForm() {
 
   const handleDownload = () => {
     if (!response) return;
-  
+
     const filePath =
       response.summary_path || response.srt_path || response.txt_path || response.path;
-  
+
     if (!filePath) return alert("No downloadable file path found.");
-  
+
     const fileName = filePath.split("/").pop();
     const link = document.createElement("a");
     link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}?download=true`;
-    link.setAttribute("download", ""); // Force download
+    link.setAttribute("download", "");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}>
+    <form
+      onSubmit={handleSubmit}
+      style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}
+    >
       <input type="file" accept="audio/*,video/*" onChange={(e) => setFile(e.target.files[0])} />
 
       <label>Feature:</label>
@@ -93,6 +96,33 @@ function UploadForm() {
         {loading ? "Uploading..." : "Upload"}
       </button>
 
+      {/* Loading spinner and notice */}
+      {loading && (
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
+          <span>It may take some time...</span>
+          <svg
+            style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 00-8 8z"
+            />
+          </svg>
+        </div>
+      )}
+
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {response && (
@@ -106,6 +136,13 @@ function UploadForm() {
           )}
         </div>
       )}
+
+      {/* Spinner CSS if not using Tailwind */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </form>
   );
 }
