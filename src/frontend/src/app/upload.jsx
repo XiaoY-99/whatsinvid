@@ -43,16 +43,21 @@ function UploadForm() {
   };
 
   const handleDownload = () => {
-    if (!response?.path) return;
-
-    const fileName = response.path.split("/").pop();
+    if (!response) return;
+  
+    const filePath =
+      response.summary_path || response.srt_path || response.txt_path || response.path;
+  
+    if (!filePath) return alert("No downloadable file path found.");
+  
+    const fileName = filePath.split("/").pop();
     const link = document.createElement("a");
-    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}?download=true`;
-    link.setAttribute("download", "");
+    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}`;
+    link.setAttribute("download", ""); // Force download
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  };  
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}>
