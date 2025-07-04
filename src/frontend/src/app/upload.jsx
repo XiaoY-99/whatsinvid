@@ -9,25 +9,6 @@ function UploadForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const pollStatus = async (taskId) => {
-    const base = process.env.NEXT_PUBLIC_API_BASE;
-    let attempts = 0;
-    const maxAttempts = 300; // ~5 minutes
-    const interval = 1000;
-
-    while (attempts < maxAttempts) {
-      await new Promise((r) => setTimeout(r, interval));
-      const statusRes = await fetch(`${base}/status/${taskId}`);
-      const statusData = await statusRes.json();
-
-      if (statusData.status === "done") return statusData;
-      if (statusData.status === "error") throw new Error(statusData.message || "Processing failed");
-      attempts++;
-    }
-
-    throw new Error("Timeout: Task took too long");
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -50,15 +31,10 @@ function UploadForm() {
 
       if (!res.ok) throw new Error(`Server responded with ${res.status}`);
 
-      const { task_id, status, message } = await res.json();
+      const result = await res.json();
+      if (!result.path) throw new Error("No downloadable file path received.");
 
-      if (feature === "summary") {
-        const result = await pollStatus(task_id);
-        setResponse(result);
-      } else {
-        // for subtitles/slides/poster which still return result directly
-        setResponse({ message, task_id });
-      }
+      setResponse(result);
     } catch (err) {
       setError(err.message || "Upload failed");
     } finally {
@@ -67,14 +43,9 @@ function UploadForm() {
   };
 
   const handleDownload = () => {
-    if (!response) return;
+    if (!response?.path) return;
 
-    const filePath =
-      response.summary_path || response.srt_path || response.txt_path || response.path;
-
-    if (!filePath) return alert("No downloadable file path found.");
-
-    const fileName = filePath.split("/").pop();
+    const fileName = response.path.split("/").pop();
     const link = document.createElement("a");
     link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}?download=true`;
     link.setAttribute("download", "");
@@ -123,11 +94,9 @@ function UploadForm() {
         <div style={{ marginTop: 20 }}>
           <strong>{response.message || "Processing complete!"}</strong>
           <br />
-          {(response.summary_path || response.srt_path || response.txt_path || response.path) && (
-            <button onClick={handleDownload} style={{ marginTop: 10 }}>
-              Download Result
-            </button>
-          )}
+          <button onClick={handleDownload} style={{ marginTop: 10 }}>
+            Download Result
+          </button>
         </div>
       )}
     </form>

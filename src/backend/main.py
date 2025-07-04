@@ -1,6 +1,6 @@
 import os
 import uuid
-from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -14,9 +14,6 @@ from poster_gen import generate_poster
 
 # FastAPI app setup
 app = FastAPI()
-
-# In-memory task status store
-task_status = {}
 
 # CORS config
 app.add_middleware(
@@ -36,51 +33,32 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 async def health_check():
     return {"status": "ok"}
 
-
 @app.post("/summary/")
 async def create_summary(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     language: str = Form("English"),
     tone: str = Form("neutral")
 ):
-    task_id = str(uuid.uuid4())
+    uid = str(uuid.uuid4())
     filename_base = os.path.splitext(file.filename)[0]
-    input_path = os.path.join(UPLOAD_DIR, f"{task_id}_{filename_base}.mp3")
+    input_path = os.path.join(UPLOAD_DIR, f"{uid}_{filename_base}.mp3")
 
     with open(input_path, "wb") as f:
         f.write(await file.read())
 
-    task_status[task_id] = {"status": "processing"}
+    transcript = transcribe_audio(input_path)
+    summary = summarize_text(transcript, language=language, tone=tone)
 
-    background_tasks.add_task(process_summary, task_id, input_path, filename_base, language, tone)
-    return {"task_id": task_id, "status": "processing"}
+    output_filename = f"{uid}_{filename_base}_summary.txt"
+    output_path = os.path.join(UPLOAD_DIR, output_filename)
 
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(summary)
 
-async def process_summary(task_id, input_path, filename_base, language, tone):
-    try:
-        transcript = transcribe_audio(input_path)
-        summary = summarize_text(transcript, language=language, tone=tone)
-
-        summary_filename = f"{task_id}_{filename_base}_summary.txt"
-        summary_path = os.path.join(UPLOAD_DIR, summary_filename)
-
-        with open(summary_path, "w", encoding="utf-8") as f:
-            f.write(summary)
-
-        task_status[task_id] = {
-            "status": "done",
-            "path": f"uploads/{summary_filename}",
-            "message": f"Summary generated in {language} with {tone} tone"
-        }
-    except Exception as e:
-        task_status[task_id] = {"status": "error", "message": str(e)}
-
-
-@app.get("/status/{task_id}")
-async def get_task_status(task_id: str):
-    return task_status.get(task_id, {"status": "not_found"})
-
+    return {
+        "message": f"Summary generated in {language} with {tone} tone",
+        "path": f"uploads/{output_filename}"
+    }
 
 @app.post("/subtitles/")
 async def create_subtitles(
@@ -103,10 +81,8 @@ async def create_subtitles(
 
     return {
         "message": f"Subtitles generated in {language}",
-        "srt_path": f"uploads/{os.path.basename(paths['srt'])}",
-        "txt_path": f"uploads/{os.path.basename(paths['txt'])}"
+        "path": f"uploads/{os.path.basename(paths['srt'])}"
     }
-
 
 @app.post("/slides/")
 async def create_slides(
@@ -133,7 +109,6 @@ async def create_slides(
         "path": f"uploads/{slide_filename}"
     }
 
-
 @app.post("/poster/")
 async def create_poster(
     file: UploadFile = File(...),
@@ -159,7 +134,6 @@ async def create_poster(
         "path": f"uploads/{poster_filename}"
     }
 
-
 @app.get("/download/{filename}")
 async def download_file(filename: str, download: bool = True):
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -173,6 +147,5 @@ async def download_file(filename: str, download: bool = True):
         headers={"Content-Disposition": f"attachment; filename={filename}"} if download else {}
     )
 
-
-# Make uploaded files accessible
+# Serve uploaded files
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
