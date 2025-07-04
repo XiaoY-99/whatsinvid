@@ -16,14 +16,14 @@ function UploadForm() {
 
     if (!file) return alert("Please select a file");
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("language", language);
-    formData.append("tone", tone);
-
-    setLoading(true);
+    setLoading(true); // Moved up
 
     try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("language", language);
+      formData.append("tone", tone);
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/${feature}/`, {
         method: "POST",
         body: formData,
@@ -141,7 +141,7 @@ function UploadForm() {
         </div>
       )}
 
-      {/* Spinner CSS if not using Tailwind */}
+      {/* Spinner CSS */}
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
