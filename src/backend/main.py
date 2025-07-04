@@ -1,7 +1,5 @@
 import os
 import uuid
-import redis
-import json
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -14,10 +12,13 @@ from slide_maker import generate_slides
 from subtitle_utils import generate_srt_and_txt
 from poster_gen import generate_poster
 
-# Initialize FastAPI app
+# FastAPI app setup
 app = FastAPI()
 
-# CORS configuration
+# In-memory task status store
+task_status = {}
+
+# CORS config
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://whatsinvid.vercel.app"],
@@ -31,17 +32,10 @@ BASE_DIR = os.path.dirname(__file__)
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Redis setup
-redis_client = redis.Redis(
-    host=os.getenv("REDIS_HOST", "localhost"),
-    port=int(os.getenv("REDIS_PORT", 6379)),
-    db=0,
-    decode_responses=True
-)
-
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
 
 @app.post("/summary/")
 async def create_summary(
@@ -57,11 +51,11 @@ async def create_summary(
     with open(input_path, "wb") as f:
         f.write(await file.read())
 
-    # Save initial task status
-    redis_client.setex(task_id, 7200, json.dumps({"status": "processing"}))
+    task_status[task_id] = {"status": "processing"}
 
     background_tasks.add_task(process_summary, task_id, input_path, filename_base, language, tone)
     return {"task_id": task_id, "status": "processing"}
+
 
 async def process_summary(task_id, input_path, filename_base, language, tone):
     try:
@@ -74,23 +68,19 @@ async def process_summary(task_id, input_path, filename_base, language, tone):
         with open(summary_path, "w", encoding="utf-8") as f:
             f.write(summary)
 
-        redis_client.setex(task_id, 7200, json.dumps({
+        task_status[task_id] = {
             "status": "done",
             "path": f"uploads/{summary_filename}",
             "message": f"Summary generated in {language} with {tone} tone"
-        }))
+        }
     except Exception as e:
-        redis_client.setex(task_id, 7200, json.dumps({
-            "status": "error",
-            "message": str(e)
-        }))
+        task_status[task_id] = {"status": "error", "message": str(e)}
+
 
 @app.get("/status/{task_id}")
 async def get_task_status(task_id: str):
-    task_data = redis_client.get(task_id)
-    if not task_data:
-        return {"status": "not_found"}
-    return json.loads(task_data)
+    return task_status.get(task_id, {"status": "not_found"})
+
 
 @app.post("/subtitles/")
 async def create_subtitles(
@@ -117,6 +107,7 @@ async def create_subtitles(
         "txt_path": f"uploads/{os.path.basename(paths['txt'])}"
     }
 
+
 @app.post("/slides/")
 async def create_slides(
     file: UploadFile = File(...),
@@ -141,6 +132,7 @@ async def create_slides(
         "message": f"Slides generated in {language} with {tone} tone",
         "path": f"uploads/{slide_filename}"
     }
+
 
 @app.post("/poster/")
 async def create_poster(
@@ -167,6 +159,7 @@ async def create_poster(
         "path": f"uploads/{poster_filename}"
     }
 
+
 @app.get("/download/{filename}")
 async def download_file(filename: str, download: bool = True):
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -180,5 +173,6 @@ async def download_file(filename: str, download: bool = True):
         headers={"Content-Disposition": f"attachment; filename={filename}"} if download else {}
     )
 
-# Serve uploaded files
+
+# Make uploaded files accessible
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
