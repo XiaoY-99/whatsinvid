@@ -96,9 +96,16 @@ function UploadForm() {
         {loading ? "Uploading..." : "Upload"}
       </button>
 
-      {/* Loading spinner and notice */}
+      {/* Loading spinner and notice (visible under buttons) */}
       {loading && (
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", color: "#555" }}>
+        <div style={{ 
+          marginTop: "1rem", 
+          display: "flex", 
+          alignItems: "center", 
+          gap: "0.5rem", 
+          fontSize: "0.9rem", 
+          color: "#555" 
+        }}>
           <span>It may take some time...</span>
           <svg
             style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px" }}
@@ -107,7 +114,6 @@ function UploadForm() {
             viewBox="0 0 24 24"
           >
             <circle
-              className="opacity-25"
               cx="12"
               cy="12"
               r="10"
@@ -115,13 +121,13 @@ function UploadForm() {
               strokeWidth="4"
             />
             <path
-              className="opacity-75"
               fill="currentColor"
               d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 00-8 8z"
             />
           </svg>
         </div>
       )}
+
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
