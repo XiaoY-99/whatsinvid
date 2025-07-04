@@ -50,15 +50,15 @@ function UploadForm() {
   
     if (!filePath) return alert("No downloadable file path found.");
   
-    const fileName = filePath.split("/").pop();
+    const fileName = filePath.split("/").pop(); // Get just the filename
     const link = document.createElement("a");
     link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}`;
-    link.setAttribute("download", ""); // Force download
+    link.setAttribute("download", fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };  
-
+  };
+ 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}>
       <input type="file" accept="audio/*,video/*" onChange={(e) => setFile(e.target.files[0])} />
