@@ -141,14 +141,16 @@ async def create_poster(
 
 
 @app.get("/download/{filename}")
-async def download_file(filename: str):
+async def download_file(filename: str, download: bool = True):
     file_path = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(file_path):
         return {"error": "File not found"}
+
     return FileResponse(
         file_path,
+        media_type="application/octet-stream",
         filename=filename,
-        media_type='application/octet-stream'
+        headers={"Content-Disposition": f"attachment; filename={filename}"} if download else {}
     )
 
 

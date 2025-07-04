@@ -52,7 +52,7 @@ function UploadForm() {
   
     const fileName = filePath.split("/").pop();
     const link = document.createElement("a");
-    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}`;
+    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/download/${fileName}?download=true`;
     link.setAttribute("download", ""); // Force download
     document.body.appendChild(link);
     link.click();
