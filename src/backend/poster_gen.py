@@ -40,7 +40,13 @@ def generate_poster(summary: str, output_path: str) -> str:
     draw_dummy = ImageDraw.Draw(dummy_img)
 
     wrapped_summary = textwrap.wrap(summary, width=60)
-    text_height = sum(draw_dummy.textbbox(line, font=body_font)[1] + 10 for line in wrapped_summary)
+
+    # Calculate total text height
+    text_height = sum(
+        (draw_dummy.textbbox((0, 0), line, font=body_font)[3] - draw_dummy.textbbox((0, 0), line, font=body_font)[1]) + 10
+        for line in wrapped_summary
+    )
+
     total_height = text_height + margin * 3 + 40  # +title +margins
 
     # Create image canvas with computed height
@@ -49,14 +55,18 @@ def generate_poster(summary: str, output_path: str) -> str:
 
     # Draw title
     title_text = "Video Summary"
-    title_w, title_h = draw.textbbox(title_text, font=title_font)
+    title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
+    title_w = title_bbox[2] - title_bbox[0]
+    title_h = title_bbox[3] - title_bbox[1]
     draw.text((margin, margin), title_text, fill=title_color, font=title_font)
 
     # Draw wrapped summary
     y = margin + title_h + spacing
     for line in wrapped_summary:
         draw.text((margin, y), line, fill=text_color, font=body_font)
-        y += draw.textbbox(line, font=body_font)[1] + 10
+        line_bbox = draw.textbbox((0, 0), line, font=body_font)
+        line_height = line_bbox[3] - line_bbox[1]
+        y += line_height + 10
 
     # Optional logo
     logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
