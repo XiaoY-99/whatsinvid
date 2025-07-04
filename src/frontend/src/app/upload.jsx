@@ -95,8 +95,7 @@ function UploadForm() {
       <button type="submit" disabled={loading}>
         {loading ? "Uploading..." : "Upload"}
       </button>
-
-      {/* Loading spinner and notice (visible under buttons) */}
+      
       {loading && (
         <div style={{ 
           marginTop: "1rem", 
@@ -127,7 +126,6 @@ function UploadForm() {
           </svg>
         </div>
       )}
-
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
