@@ -144,7 +144,7 @@ async def download_file(filename: str):
         file_path,
         media_type="application/octet-stream",
         filename=filename,
-        headers={"Content-Disposition": f"attachment; filename={filename}"} if download else {}
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 # Serve uploaded files
