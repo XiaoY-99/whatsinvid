@@ -97,7 +97,7 @@ export default function Page() {
           {/* Language and Tone */}
           <div className="flex gap-4 mb-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Language</label>
+              <label className="block text-sm font-medium mb-1">Output Language</label>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}

@@ -44,17 +44,19 @@ function UploadForm() {
 
   const handleDownload = () => {
     if (!response) return;
-
+  
     const filePath =
       response.summary_path || response.srt_path || response.txt_path || response.path;
-
+  
     if (!filePath) return alert("No downloadable file path found.");
-
-    const a = document.createElement("a");
-    a.href = `${process.env.NEXT_PUBLIC_API_BASE}/${filePath}`;
-    a.download = filePath.split("/").pop();
-    a.click();
-  };
+  
+    const link = document.createElement("a");
+    link.href = `${process.env.NEXT_PUBLIC_API_BASE}/${filePath}`;
+    link.setAttribute("download", ""); // Force browser to download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };  
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}>
