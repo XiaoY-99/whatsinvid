@@ -65,46 +65,15 @@ function UploadForm() {
       onSubmit={handleSubmit}
       style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 600 }}
     >
-      <input type="file" accept="audio/*,video/*" onChange={(e) => setFile(e.target.files[0])} />
-
-      <label>Feature:</label>
-      <select value={feature} onChange={(e) => setFeature(e.target.value)}>
-        <option value="summary">Summary</option>
-        <option value="subtitles">Subtitles</option>
-        <option value="slides">Slides</option>
-        <option value="poster">Poster</option>
-      </select>
-
-      <label>Language:</label>
-      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-        <option value="English">English</option>
-        <option value="Chinese">Chinese</option>
-        <option value="French">French</option>
-        <option value="German">German</option>
-        <option value="Spanish">Spanish</option>
-      </select>
-
-      <label>Tone:</label>
-      <select value={tone} onChange={(e) => setTone(e.target.value)}>
-        <option value="neutral">Neutral</option>
-        <option value="scientific">Scientific</option>
-        <option value="business">Business</option>
-        <option value="marketing">Marketing</option>
-        <option value="friendly">Friendly</option>
-      </select>
-
-      <button type="submit" disabled={loading}>
-        {loading ? "Uploading..." : "Upload"}
-      </button>
-      
+      {/* Processing notice (moved to top of form) */}
       {loading && (
-        <div style={{ 
-          marginTop: "1rem", 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "0.5rem", 
-          fontSize: "0.9rem", 
-          color: "#555" 
+        <div style={{
+          marginBottom: "1rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          fontSize: "0.9rem",
+          color: "#555"
         }}>
           <span>It may take some time...</span>
           <svg
@@ -127,9 +96,41 @@ function UploadForm() {
           </svg>
         </div>
       )}
-
+  
+      <input type="file" accept="audio/*,video/*" onChange={(e) => setFile(e.target.files[0])} />
+  
+      <label>Feature:</label>
+      <select value={feature} onChange={(e) => setFeature(e.target.value)}>
+        <option value="summary">Summary</option>
+        <option value="subtitles">Subtitles</option>
+        <option value="slides">Slides</option>
+        <option value="poster">Poster</option>
+      </select>
+  
+      <label>Language:</label>
+      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+        <option value="English">English</option>
+        <option value="Chinese">Chinese</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+        <option value="Spanish">Spanish</option>
+      </select>
+  
+      <label>Tone:</label>
+      <select value={tone} onChange={(e) => setTone(e.target.value)}>
+        <option value="neutral">Neutral</option>
+        <option value="scientific">Scientific</option>
+        <option value="business">Business</option>
+        <option value="marketing">Marketing</option>
+        <option value="friendly">Friendly</option>
+      </select>
+  
+      <button type="submit" disabled={loading}>
+        {loading ? "Uploading..." : "Upload"}
+      </button>
+  
       {error && <p style={{ color: "red" }}>{error}</p>}
-
+  
       {response && (
         <div style={{ marginTop: 20 }}>
           <strong>{response.message}</strong>
@@ -141,8 +142,7 @@ function UploadForm() {
           )}
         </div>
       )}
-
-      {/* Spinner CSS */}
+  
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
